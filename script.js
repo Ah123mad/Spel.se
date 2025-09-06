@@ -17,7 +17,6 @@ form.addEventListener("submit", async (e) => {
     const data = await r.json();
     ph.textContent = data.reply || "Inget svar";
     ph.classList.remove("typing");
-    speak(ph.textContent);
   } catch (err) {
     ph.textContent = "Fel: " + err.message;
     ph.classList.remove("typing");
