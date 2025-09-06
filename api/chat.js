@@ -1,6 +1,7 @@
 export default async function handler(req, res) {
-  if (req.method !== "POST")
-    return res.status(405).json({ error: "Method not allowed" });
+  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+  if (!process.env.OPENAI_API_KEY) return res.status(500).json({ error: "Missing OPENAI_API_KEY" });
+
   try {
     const { message } = req.body || {};
     if (!message) return res.status(400).json({ error: "No message" });
@@ -13,32 +14,15 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: "gpt-4o",
-        input: [{ role: "user", content: message }],
-        stream: true,
+        input: [{ role: "user", content: message }]
       }),
     });
 
-    if (!r.ok) {
-      const err = await r.json();
-      return res
-        .status(500)
-        .json({ error: err.error?.message || "OpenAI error" });
-    }
+    const data = await r.json();
+    if (!r.ok) return res.status(500).json({ error: data.error?.message || "OpenAI error" });
 
-    res.writeHead(200, {
-      "Content-Type": "text/plain; charset=utf-8",
-      "Transfer-Encoding": "chunked",
-    });
-
-    const reader = r.body.getReader();
-    const decoder = new TextDecoder();
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      res.write(decoder.decode(value));
-    }
-    res.end();
+    return res.status(200).json({ reply: data.output_text || "Inget svar" });
   } catch (e) {
-    res.status(500).json({ error: e.message });
+    return res.status(500).json({ error: e.message });
   }
 }
