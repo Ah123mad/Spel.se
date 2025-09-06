@@ -1,6 +1,22 @@
-{\rtf1\ansi\ansicpg1252\cocoartf2822
-\cocoatextscaling0\cocoaplatform0{\fonttbl}
-{\colortbl;\red255\green255\blue255;}
-{\*\expandedcolortbl;;}
-\paperw11900\paperh16840\margl1440\margr1440\vieww28300\viewh14980\viewkind0
+export default async function handler(req, res) {
+  if (req.method !== "POST") return res.status(405).end();
+
+  try {
+    const { query } = req.body || {};
+    if (!query) return res.status(400).json({ error: "No query" });
+
+    // Enkel plugin som söker på Wikipedia
+    const r = await fetch(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
+        query
+      )}`
+    );
+    const data = await r.json();
+
+    res.status(200).json({
+      reply: data.extract || "Hittade inget på Wikipedia",
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
 }
